@@ -132,6 +132,14 @@ drafts = repo.list_drafts()
 by_id = {str(row["id"]): row for row in employers}
 
 
+def daily_draft_count(day: date) -> int:
+    """Use the database counter when available; fall back for an older deployed storage.py."""
+    counter = getattr(repo, "daily_draft_count", None)
+    if callable(counter):
+        return int(counter(day))
+    return sum(1 for draft in drafts if draft.get("status") != "discarded" and draft_local_day(draft) == day)
+
+
 def page_header(kicker: str, title: str, desc: str):
     st.markdown(f'<div class="eyebrow">{kicker}</div><h1>{title}</h1><p class="lead">{desc}</p>', unsafe_allow_html=True)
 
@@ -146,7 +154,7 @@ if page == "Overview":
     start_raw = repo.get_setting("start_date", "2027-02-01")
     start_date = date.fromisoformat(start_raw) if isinstance(start_raw, str) else date(2027, 2, 1)
     cap = int(repo.get_setting("daily_cap", 5))
-    prepared_today = repo.daily_draft_count(today)
+    prepared_today = daily_draft_count(today)
     pending = sum(d.get("status") == "draft" for d in drafts)
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Employer records", len(employers))
@@ -332,7 +340,7 @@ elif page == "Daily email pack":
     start_raw = repo.get_setting("start_date", "2027-02-01")
     start_date = date.fromisoformat(start_raw) if isinstance(start_raw, str) else date(2027, 2, 1)
     cap = int(repo.get_setting("daily_cap", 5))
-    prepared = repo.daily_draft_count(today)
+    prepared = daily_draft_count(today)
 
     if st.session_state.get("au_demo_mode"):
         st.warning("Synthetic demonstration only. This sample uses example.org addresses and does not save drafts or contact anyone.")
