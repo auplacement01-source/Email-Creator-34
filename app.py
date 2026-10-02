@@ -502,7 +502,7 @@ elif page == "Settings":
     else:
         st.warning("SQLite is preview-only. Configure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before importing real employer data or deploying.")
     if secret("GROQ_API_KEY"):
-        st.success(f"Groq drafting and browser search configured · {secret('GROQ_MODEL', 'openai/gpt-oss-20b')}")
+        st.success(f"Groq drafting and browser search configured · {secret('GROQ_MODEL', 'openai/gpt-oss-120b')}")
     else:
         st.info("Groq is optional. Without a key, drafting uses an editable local template and discovery opens a direct search link.")
     st.markdown("### Manual email workflow")
