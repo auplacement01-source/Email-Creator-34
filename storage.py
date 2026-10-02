@@ -64,7 +64,7 @@ class Repository:
             create table if not exists email_drafts(
               id text primary key, employer_id text not null, to_email text not null, subject text not null,
               body_text text not null, program_fit text not null default '[]', status text not null default 'draft',
-              created_by text, approved_by text, approved_at text, sent_at text, outlook_message_id text,
+              created_by text, approved_by text, approved_at text, sent_at text,
               error_text text, created_at text, updated_at text
             );
             create table if not exists activity_logs(
@@ -176,7 +176,7 @@ class Repository:
             return [self._draft_out(dict(r)) for r in rows]
 
     def update_draft(self, draft_id: str, changes: dict[str, Any]):
-        allowed={"to_email","subject","body_text","program_fit","status","approved_by","approved_at","sent_at","outlook_message_id","error_text"}
+        allowed={"to_email","subject","body_text","program_fit","status","approved_by","approved_at","sent_at"}
         data={k:v for k,v in changes.items() if k in allowed}; data["updated_at"]=_now()
         if "to_email" in data: data["to_email"]=data["to_email"].strip().lower()
         if self.supabase:
@@ -225,12 +225,12 @@ class Repository:
             with self._connect() as c:
                 c.execute("insert into campaign_settings(key,value,updated_at) values(?,?,?) on conflict(key) do update set value=excluded.value, updated_at=excluded.updated_at",(key,json.dumps(value),_now()))
 
-    def daily_sent_count(self, day: date) -> int:
+    def daily_draft_count(self, day: date) -> int:
         local_start=datetime.combine(day,time.min,tzinfo=ZoneInfo("Asia/Karachi"))
         start=local_start.astimezone(timezone.utc).isoformat()
         end=(local_start+timedelta(days=1)).astimezone(timezone.utc).isoformat()
         if self.supabase:
-            rows=self.supabase.table("email_drafts").select("id",count="exact").eq("status","sent").gte("sent_at",start).lt("sent_at",end).execute()
+            rows=self.supabase.table("email_drafts").select("id",count="exact").gte("created_at",start).lt("created_at",end).neq("status","discarded").execute()
             return int(rows.count or 0)
         with self._connect() as c:
-            return int(c.execute("select count(*) from email_drafts where status='sent' and sent_at>=? and sent_at<?",(start,end)).fetchone()[0])
+            return int(c.execute("select count(*) from email_drafts where status!='discarded' and created_at>=? and created_at<?",(start,end)).fetchone()[0])
