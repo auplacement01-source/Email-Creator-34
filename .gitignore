@@ -1,0 +1,23 @@
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.streamlit/secrets.local.toml
+
+# Personal data and local runtime database
+*.xlsx
+*.xls
+*.csv
+!requirements.txt
+/data/*
+!/data/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+
+# Python / Streamlit
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.streamlit/cache/
